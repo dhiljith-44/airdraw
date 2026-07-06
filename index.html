@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Air Drawing DJ™</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #000;
+      overflow: hidden;
+      color: #fff;
+      position: fixed;
+    }
+
+    .container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      position: relative;
+    }
+
+    /* Setup Screen */
+    #setupScreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a0a2e 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+      gap: 40px;
+    }
+
+    #setupScreen.hidden {
+      display: none;
+    }
+
+    .setup-header {
+      text-align: center;
+    }
+
+    .setup-title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #00ff88 0%, #00cc6f 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .setup-subtitle {
+      font-size: 14px;
+      color: rgba(0, 255, 136, 0.6);
+    }
+
+    .setup-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      width: 100%;
+      max-width: 300px;
+    }
+
+    .setup-control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .setup-label {
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #00ff88;
+    }
+
+    #setupColorPicker {
+      width: 100%;
+      height: 70px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(0, 255, 136, 0.3);
+    }
+
+    .thickness-container {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .thickness-display {
+      text-align: center;
+      padding: 15px;
+      background: rgba(0, 255, 136, 0.05);
+      border: 1px solid rgba(0, 255, 136, 0.2);
+      border-radius: 8px;
+    }
+
+    .thickness-preview {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.05));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    #setupThicknessSlider {
+      width: 100%;
+      height: 8px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(0, 255, 136, 0.1);
+      border-radius: 4px;
+      outline: none;
+    }
+
+    #setupThicknessSlider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      background: #00ff88;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(0, 255, 136, 0.6);
+    }
+
+    #setupThicknessSlider::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+      background: #00ff88;
+      border: none;
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(0, 255, 136, 0.6);
+    }
+
+    .setup-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+    }
+
+    .setup-btn {
+      padding: 16px;
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.1));
+      border: 2px solid rgba(0, 255, 136, 0.4);
+      border-radius: 12px;
+      color: #00ff88;
+      font-size: 16px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+    }
+
+    .setup-btn:active {
+      background: linear-gradient(135deg, rgba(0, 255, 136, 0.4), rgba(0, 255, 136, 0.3));
+      box-shadow: 0 0 20px rgba(0, 255, 136, 0.5);
+    }
+
+    /* Canvas Screen */
+    #canvasScreen {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    #canvasScreen.hidden {
+      display: none;
+    }
+
+    #video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: 1;
+      transform: scaleX(-1);
+    }
+
+    #canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      cursor: none;
+      touch-action: none;
+      transform: scaleX(-1);
+    }
+
+    .floating-controls {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .control-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(0, 255, 136, 0.5);
+      color: #00ff88;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+    }
+
+    .control-btn:active {
+      background: rgba(0, 0, 0, 0.9);
+      box-shadow: 0 0 25px rgba(0, 255, 136, 0.6);
+    }
+
+    .status-bar {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0, 255, 136, 0.4);
+      border-radius: 25px;
+      padding: 12px 18px;
+      font-size: 12px;
+      font-weight: 500;
+      z-index: 100;
+      white-space: nowrap;
+    }
+
+    .gesture-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ff4444;
+      margin-right: 8px;
+      animation: pulse-red 1s infinite;
+    }
+
+    .gesture-indicator.drawing {
+      background: #00ff88;
+      animation: pulse-green 1s infinite;
+    }
+
+    .gesture-indicator.erasing {
+      background: #ffaa00;
+      animation: pulse-orange 1s infinite;
+    }
+
+    .gesture-indicator.text {
+      background: #00aaff;
+      animation: pulse-blue 1s infinite;
+    }
+
+    @keyframes pulse-green {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes pulse-orange {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes pulse-blue {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes pulse-red {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    .info-text {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 16px;
+      pointer-events: none;
+      z-index: 10;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    }
+
+    .text-input-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+      backdrop-filter: blur(5px);
+    }
+
+    .text-input-modal.active {
+      display: flex;
+    }
+
+    .text-input-content {
+      background: linear-gradient(135deg, #1a1a1a 0%, #2a1a3a 100%);
+      border: 2px solid rgba(0, 255, 136, 0.4);
+      border-radius: 16px;
+      padding: 24px;
+      width: 90%;
+      max-width: 300px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .text-input-content h3 {
+      color: #00ff88;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    .text-input-content textarea {
+      width: 100%;
+      min-height: 80px;
+      padding: 12px;
+      background: rgba(0, 255, 136, 0.05);
+      border: 1px solid rgba(0, 255, 136, 0.3);
+      border-radius: 8px;
+      color: #00ff88;
+      font-family: inherit;
+      resize: none;
+    }
+
+    .text-input-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .text-input-buttons button {
+      flex: 1;
+      padding: 12px;
+      background: rgba(0, 255, 136, 0.2);
+      border: 1px solid rgba(0, 255, 136, 0.4);
+      color: #00ff88;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .text-input-buttons button:active {
+      background: rgba(0, 255, 136, 0.4);
+    }
+
+    .draggable-text {
+      position: absolute;
+      color: #00ff88;
+      font-weight: bold;
+      font-size: 20px;
+      cursor: move;
+      user-select: none;
+      text-shadow: 0 0 10px rgba(0, 255, 136, 0.8);
+      z-index: 50;
+    }
+
+    @supports (padding: max(0px)) {
+      body {
+        padding-left: max(0px, env(safe-area-inset-left));
+        padding-right: max(0px, env(safe-area-inset-right));
+        padding-top: max(0px, env(safe-area-inset-top));
+        padding-bottom: max(0px, env(safe-area-inset-bottom));
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Setup Screen -->
+  <div id="setupScreen">
+    <div class="setup-header">
+      <div class="setup-title">DJ™</div>
+      <div class="setup-subtitle">Air Drawing</div>
+    </div>
+
+    <div class="setup-controls">
+      <!-- Color Picker -->
+      <div class="setup-control-group">
+        <label class="setup-label">Brush Color</label>
+        <input type="color" id="setupColorPicker" value="#00ff88">
+      </div>
+
+      <!-- Thickness Slider -->
+      <div class="setup-control-group">
+        <label class="setup-label">Brush Thickness</label>
+        <div class="thickness-container">
+          <div class="thickness-display">
+            <div class="thickness-preview" id="thicknessPreview">●</div>
+            <div style="margin-top: 8px; font-size: 12px; color: rgba(0, 255, 136, 0.7);">
+              <span id="setupThicknessValue">8</span>px
+            </div>
+          </div>
+          <input type="range" id="setupThicknessSlider" min="2" max="40" value="8">
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-buttons">
+      <button class="setup-btn" id="continueBtn">▶ Continue</button>
+    </div>
+  </div>
+
+  <!-- Canvas Screen -->
+  <div id="canvasScreen" class="hidden">
+    <div class="container">
+      <video id="video" playsinline muted autoplay></video>
+      <canvas id="canvas"></canvas>
+      <div id="textContainer"></div>
+
+      <div class="floating-controls">
+        <button class="control-btn" id="textBtn" title="Add text">📝</button>
+        <button class="control-btn" id="clearBtn" title="Clear canvas">🗑</button>
+        <button class="control-btn" id="undoBtn" title="Undo">↶</button>
+        <button class="control-btn" id="settingsBtn" title="Settings">⚙</button>
+      </div>
+
+      <div class="status-bar">
+        <span class="gesture-indicator" id="gestureIndicator"></span>
+        <span id="statusText">Ready</span>
+      </div>
+
+      <div class="info-text" id="infoText">
+        👋 Show your hand
+      </div>
+    </div>
+  </div>
+
+  <!-- Text Input Modal -->
+  <div id="textInputModal" class="text-input-modal">
+    <div class="text-input-content">
+      <h3>Add Text</h3>
+      <textarea id="textInput" placeholder="Enter your text..."></textarea>
+      <div class="text-input-buttons">
+        <button id="addTextBtn">Add</button>
+        <button id="cancelTextBtn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js"></script>
+
+  <script>
+    const setupScreen = document.getElementById('setupScreen');
+    const canvasScreen = document.getElementById('canvasScreen');
+    const continueBtn = document.getElementById('continueBtn');
+    const settingsBtn = document.getElementById('settingsBtn');
+    const textBtn = document.getElementById('textBtn');
+
+    const setupColorPicker = document.getElementById('setupColorPicker');
+    const setupThicknessSlider = document.getElementById('setupThicknessSlider');
+    const setupThicknessValue = document.getElementById('setupThicknessValue');
+    const thicknessPreview = document.getElementById('thicknessPreview');
+
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const video = document.getElementById('video');
+    const textContainer = document.getElementById('textContainer');
+    const clearBtn = document.getElementById('clearBtn');
+    const undoBtn = document.getElementById('undoBtn');
+    const statusText = document.getElementById('statusText');
+    const gestureIndicator = document.getElementById('gestureIndicator');
+    const infoText = document.getElementById('infoText');
+
+    // Text modal
+    const textInputModal = document.getElementById('textInputModal');
+    const textInput = document.getElementById('textInput');
+    const addTextBtn = document.getElementById('addTextBtn');
+    const cancelTextBtn = document.getElementById('cancelTextBtn');
+
+    let brush = {
+      color: '#00ff88',
+      thickness: 8,
+      glowIntensity: 20
+    };
+
+    let isDrawing = false;
+    let isPaused = false;
+    let isErasing = false;
+    let isAddingText = false;
+    let lastX = 0;
+    let lastY = 0;
+    let frameCount = 0;
+    const undoStack = [];
+    const maxUndoSteps = 10;
+    let handsInitialized = false;
+    let draggedElement = null;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    // Setup screen event listeners
+    setupThicknessSlider.addEventListener('input', (e) => {
+      const value = parseInt(e.target.value);
+      setupThicknessValue.textContent = value;
+      thicknessPreview.style.fontSize = (value * 1.5) + 'px';
+    });
+
+    continueBtn.addEventListener('click', async () => {
+      brush.color = setupColorPicker.value;
+      brush.thickness = parseInt(setupThicknessSlider.value);
+
+      continueBtn.textContent = 'Requesting Camera...';
+      continueBtn.disabled = true;
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: 'user',
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        });
+
+        stream.getTracks().forEach(track => track.stop());
+
+        setupScreen.classList.add('hidden');
+        canvasScreen.classList.remove('hidden');
+
+        resizeCanvas();
+
+        if (!handsInitialized) {
+          initializeHands();
+          handsInitialized = true;
+        }
+
+      } catch (error) {
+        console.error('Camera permission denied:', error);
+        continueBtn.textContent = '❌ Permission Denied';
+        continueBtn.disabled = false;
+        alert('Camera permission is required to use Air Drawing');
+      }
+    });
+
+    settingsBtn.addEventListener('click', () => {
+      setupScreen.classList.remove('hidden');
+      canvasScreen.classList.add('hidden');
+    });
+
+    // Text functionality
+    textBtn.addEventListener('click', () => {
+      isAddingText = true;
+      textInput.value = '';
+      textInputModal.classList.add('active');
+      textInput.focus();
+    });
+
+    addTextBtn.addEventListener('click', () => {
+      const text = textInput.value.trim();
+      if (text) {
+        addTextToCanvas(text);
+      }
+      textInputModal.classList.remove('active');
+      isAddingText = false;
+    });
+
+    cancelTextBtn.addEventListener('click', () => {
+      textInputModal.classList.remove('active');
+      isAddingText = false;
+    });
+
+    function addTextToCanvas(text) {
+      const textElement = document.createElement('div');
+      textElement.className = 'draggable-text';
+      textElement.textContent = text;
+      textElement.style.left = (window.innerWidth / 2) + 'px';
+      textElement.style.top = (window.innerHeight / 2) + 'px';
+      textElement.style.color = brush.color;
+
+      // Drag functionality
+      let isDragging = false;
+      let startX, startY;
+
+      textElement.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.clientX;
+        startY = e.clientY;
+        dragOffsetX = textElement.offsetLeft - startX;
+        dragOffsetY = textElement.offsetTop - startY;
+      });
+
+      textElement.addEventListener('touchstart', (e) => {
+        isDragging = true;
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        dragOffsetX = textElement.offsetLeft - startX;
+        dragOffsetY = textElement.offsetTop - startY;
+      });
+
+      document.addEventListener('mousemove', (e) => {
+        if (isDragging) {
+          textElement.style.left = (e.clientX + dragOffsetX) + 'px';
+          textElement.style.top = (e.clientY + dragOffsetY) + 'px';
+        }
+      });
+
+      document.addEventListener('touchmove', (e) => {
+        if (isDragging) {
+          textElement.style.left = (e.touches[0].clientX + dragOffsetX) + 'px';
+          textElement.style.top = (e.touches[0].clientY + dragOffsetY) + 'px';
+        }
+      });
+
+      document.addEventListener('mouseup', () => {
+        isDragging = false;
+      });
+
+      document.addEventListener('touchend', () => {
+        isDragging = false;
+      });
+
+      textContainer.appendChild(textElement);
+    }
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    function saveCanvasState() {
+      if (undoStack.length >= maxUndoSteps) {
+        undoStack.shift();
+      }
+      undoStack.push(canvas.toDataURL());
+    }
+
+    function updateStatusAndGesture() {
+      if (isAddingText) {
+        statusText.textContent = '📝 Text Mode';
+        gestureIndicator.className = 'gesture-indicator text';
+      } else if (isPaused) {
+        statusText.textContent = '⏸ Paused';
+        gestureIndicator.className = 'gesture-indicator';
+      } else if (isErasing) {
+        statusText.textContent = '🧹 Erasing';
+        gestureIndicator.className = 'gesture-indicator erasing';
+      } else if (isDrawing) {
+        statusText.textContent = '✏ Drawing';
+        gestureIndicator.className = 'gesture-indicator drawing';
+      } else {
+        statusText.textContent = 'Ready';
+        gestureIndicator.className = 'gesture-indicator';
+      }
+    }
+
+    function drawLine(fromX, fromY, toX, toY) {
+      if (isErasing) {
+        const eraserSize = brush.thickness * 1.5;
+        ctx.clearRect(toX - eraserSize / 2, toY - eraserSize / 2, eraserSize, eraserSize);
+      } else {
+        const glowSize = brush.glowIntensity;
+        
+        ctx.shadowColor = brush.color;
+        ctx.shadowBlur = glowSize;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        ctx.strokeStyle = brush.color;
+        ctx.lineWidth = brush.thickness;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        ctx.stroke();
+
+        ctx.shadowBlur = glowSize / 3;
+        ctx.lineWidth = brush.thickness * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(fromX, fromY);
+        ctx.lineTo(toX, toY);
+        ctx.stroke();
+      }
+    }
+
+    function detectGesture(landmarks) {
+      if (!landmarks || landmarks.length < 21) return null;
+
+      const indexTip = landmarks[8];
+      const middleTip = landmarks[12];
+      const ringTip = landmarks[16];
+      const pinkyTip = landmarks[20];
+      const wrist = landmarks[0];
+      const indexMid = landmarks[6];
+
+      const distIndex = Math.hypot(indexTip.x - wrist.x, indexTip.y - wrist.y);
+      const distMiddle = Math.hypot(middleTip.x - wrist.x, middleTip.y - wrist.y);
+      const distRing = Math.hypot(ringTip.x - wrist.x, ringTip.y - wrist.y);
+      const distPinky = Math.hypot(pinkyTip.x - wrist.x, pinkyTip.y - wrist.y);
+
+      if (distIndex < 0.12 && distMiddle < 0.12 && distRing < 0.12 && distPinky < 0.12) {
+        return 'fist';
+      }
+
+      if (distIndex > 0.35 && distMiddle > 0.35 && distRing > 0.35 && distPinky > 0.35) {
+        const spread = Math.abs(indexTip.x - pinkyTip.x);
+        if (spread > 0.2) {
+          return 'palm';
+        }
+      }
+
+      if (distIndex > 0.25 && 
+          distMiddle < 0.15 && 
+          distRing < 0.15 && 
+          distPinky < 0.15 &&
+          indexTip.z < indexMid.z) {
+        return 'pointing';
+      }
+
+      return null;
+    }
+
+    async function onResults(results) {
+      if (isAddingText) return;
+      
+      frameCount++;
+
+      if (!results.multiHandLandmarks || results.multiHandLandmarks.length === 0) {
+        isDrawing = false;
+        isErasing = false;
+        updateStatusAndGesture();
+        return;
+      }
+
+      const landmarks = results.multiHandLandmarks[0];
+      const gesture = detectGesture(landmarks);
+
+      if (gesture === 'fist') {
+        isPaused = true;
+        isDrawing = false;
+        isErasing = false;
+        infoText.style.opacity = '0';
+      } else if (gesture === 'palm') {
+        isPaused = false;
+        isDrawing = false;
+        isErasing = true;
+        infoText.style.opacity = '0';
+      } else if (gesture === 'pointing') {
+        isPaused = false;
+        isDrawing = true;
+        isErasing = false;
+        infoText.style.opacity = '0';
+
+        const indexFinger = landmarks[8];
+        const x = indexFinger.x * canvas.width;
+        const y = indexFinger.y * canvas.height;
+
+        if (frameCount % 2 === 0) {
+          if (lastX !== 0 && lastY !== 0) {
+            drawLine(lastX, lastY, x, y);
+          }
+          lastX = x;
+          lastY = y;
+        }
+      } else {
+        isPaused = false;
+        isDrawing = false;
+        isErasing = false;
+        lastX = 0;
+        lastY = 0;
+        infoText.style.opacity = '0.4';
+      }
+
+      updateStatusAndGesture();
+    }
+
+    clearBtn.addEventListener('click', () => {
+      saveCanvasState();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    });
+
+    undoBtn.addEventListener('click', () => {
+      if (undoStack.length > 0) {
+        const previousState = undoStack.pop();
+        const img = new Image();
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+        };
+        img.src = previousState;
+      }
+    });
+
+    function initializeHands() {
+      const hands = new Hands({
+        locateFile: (file) => {
+          return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+        }
+      });
+
+      hands.setOptions({
+        maxNumHands: 1,
+        modelComplexity: 1,
+        minDetectionConfidence: 0.7,
+        minTrackingConfidence: 0.5
+      });
+
+      hands.onResults(onResults);
+
+      const camera = new Camera(video, {
+        onFrame: async () => {
+          await hands.send({ image: video });
+        },
+        width: 1280,
+        height: 720
+      });
+
+      camera.start();
+    }
+
+    window.addEventListener('resize', resizeCanvas);
+    window.addEventListener('orientationchange', () => {
+      setTimeout(resizeCanvas, 100);
+    });
+  </script>
+</body>
+</html>
